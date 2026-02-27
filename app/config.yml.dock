@@ -18,10 +18,10 @@ description:
   fao: |
     <p>
       <strong>Korp</strong> er orðrannsóknarpallur Máltøknidepilsins.
-      Her kanst tú leita í nógvum teksti, <em>málheildum</em>, sum er markaður málfrøðiliga og meira.
-      Síggj <a href="https://spraakbanken.gu.se/verktyg/korp/anvandarhandledning" target="_blank">nýtsluleiðbeiningina</a> fyri at fáa hjálp.
-      Nýtir tú Korp í tínum verki, biðja vit teg um at <a href="https://spraakbanken.gu.se/om/referera" target="_blank">vísa til okkara</a>.
-      Hevur tú spurningar ella viðmerkingar, kanst tú senda okkum eini boð á <a href="mailto:mtd@mtd.fo" class="whitespace-nowrap">mtd@mtd.fo</a>.
+      Här kan du söka i stora mängder text, <em>korpusar</em>, som är annoterade med språkliga attribut med mera.
+      Se <a href="https://spraakbanken.gu.se/verktyg/korp/anvandarhandledning" target="_blank">användarhandledningen</a> för hjälp.
+      Om du använder Korp i ditt arbete ber vi dig <a href="https://spraakbanken.gu.se/om/referera" target="_blank">referera till oss</a>.
+      För frågor och kommentarer, kontakta <a href="mailto:sb-info@svenska.gu.se" class="whitespace-nowrap">sb-info@svenska.gu.se</a>.
     </p>
 
 auth_module:
@@ -59,24 +59,22 @@ languages:
   - value: fao
     label: Føroyskt
 
-#    <img ng-if="$root.lang == 'fao'" src="img/MMG.png" height="300" width="300" />
-#    <img ng-if="$root.lang != 'swe'" src="img/korp_slogan_en.svg" height="300" width="300" />
 logo:
   korp: |
-    <img ng-if="$root.lang == 'fao'" src="img/MIKLAMÁLGRUNNURIN800x90.svg" height="300" width="300" />
-    <img ng-if="$root.lang != 'fao'" src="img/korp_slogan.svg" height="300" width="300" />
+    <img ng-if="$root.lang == 'swe'" src="img/korp_slogan.svg" height="300" width="300" />
+    <img ng-if="$root.lang != 'swe'" src="img/korp_slogan_en.svg" height="300" width="300" />
   organization: |
     <a
         class="hidden min-[1150px]:flex h-20 shrink flex-col justify-end"
-        href="https://mtd.setur.fo/"
+        href="https://spraakbanken.gu.se/"
         target="_blank"
     >
-        <img ng-if="$root.lang == 'fao'" src="img/mtd.png" />
-        <img ng-if="$root.lang != 'fao'" src="img/mtd_en.png" />
+        <img ng-if="$root.lang == 'swe'" src="img/sprakbanken_text_slogan.svg" />
+        <img ng-if="$root.lang != 'swe'" src="img/sprakbanken_text_slogan_en.svg" />
     </a>
 
-    <a class="hidden xl:block shrink-0" href="https://setur.fo/" target="_blank">
-        <img src="img/setur.svg" class="h-full" height="71" width="71"/>
+    <a class="hidden xl:block shrink-0 h-32 -mt-2" href="https://gu.se/" target="_blank">
+        <img src="img/gu_logo_sv_head.svg" class="h-full" />
     </a>
 
 frontpage:
@@ -95,7 +93,6 @@ group_statistics:
   - e_cat
 
 statistics_search_default: false
-has_timespan: false
 
 # for 'compile statistics by' selector, can be 'union' or 'intersection'
 reduce_word_attribute_selector: intersection
@@ -109,7 +106,7 @@ matomo:
   production:
     site: 3
 
-# news_url: https://raw.githubusercontent.com/spraakbanken/newsdesk/main/data/korp.yaml    
+news_url: https://raw.githubusercontent.com/spraakbanken/newsdesk/main/data/korp.yaml
 
 word_picture_tagset:
     # supported pos-tags
@@ -193,7 +190,8 @@ default_options:
   matches: '*='
   matches_not: '!*='
 
-korp_backend_url: 'https://miklamal.setur.fo/backend'
+# korp_backend_url: 'https://miklamalroynd.setur.fo/backend'
+korp_backend_url: 'http://localhost:1234'
 
 map_center:
   lat: 62.99515845212052
