@@ -1,0 +1,163 @@
+import { getStringifier } from "@/services/stringify"
+import statemachine from "@/statemachine"
+import { regescape } from "@/util"
+import { Lemgram } from "@/lemgram"
+
+export default {
+    complemgram: {
+        template: String.raw`
+            <span ng-if="value == '|'" class="opacity-50">&empty;</span>
+            <ul ng-show="value != '|'">
+                <li ng-repeat="comp in values | limitTo:listLimit">
+                    <span ng-repeat="value in comp.split('+') track by $index">
+                        <span ng-if="!$first"> + </span>
+                        <a ng-click="onItemClick(value)" ng-bind-html="stringify(value) | trust"></a>
+                    </span>
+                </li>
+                <li class="link" ng-show="values.length > 1" ng-click="listLimit = listLimit < 10 ? 10 : 1">
+                    {{listLimit < 10 ? 'complemgram_show_all': 'complemgram_show_one' | loc:$root.lang}} ({{values.length - 1}})
+                </li>
+            </ul>
+        `,
+        controller: ["$location", "$scope", function($location, $scope) {
+            $scope.listLimit = 1
+            $scope.stringify = (lemgram) => Lemgram.parse(lemgram)?.toHtml() || lemgram
+            $scope.values = $scope.value.split("|").filter(Boolean).map((item) => item.replace(/:.*$/, ""))
+            $scope.onItemClick = (value) => {
+                statemachine.send("SEARCH_LEMGRAM", { value })
+                $location.search("prefix", true)
+                $location.search("suffix", true)
+            }
+        }]
+    },
+    ivipVideo: (options) => ({
+        template: String.raw`
+            <span class="link" ng-click="showVideoModal()">{{'ivip_show_video' | loc:$root.lang}}</span>
+            <div id="video-modal" ng-controller="VideoCtrl"></div>
+        `,
+        controller: ["$scope", function($scope) {
+            const startTime = $scope.wordData["sentence_start"];
+            const endTime = $scope.wordData["sentence_end"];
+            const path = $scope.sentenceData["text_mediafilepath"]
+            const file = $scope.sentenceData["text_mediafile"]
+            const ext = $scope.sentenceData["text_mediafileext"]
+
+            $scope.showVideoModal = function () {
+                const url = options.baseURL + path +  file + "." + ext
+
+                const modalScope = angular.element("#video-modal").scope()
+                modalScope.videos = [{"url": url, "type": "video/mp4"}]
+                modalScope.fileName = file + "." + ext
+                modalScope.startTime = startTime / 1000
+                modalScope.endTime = endTime / 1000
+
+                // find start of sentence
+                let startIdx = 0
+                for(let i = $scope.wordData.position; i >= 0; i--) {
+                    if(_.includes($scope.tokens[i]._open, "sentence")) {
+                        startIdx = i
+                        break
+                    }
+                }
+
+                // find end of sentence
+                let endIdx = $scope.tokens.length - 1
+                for(let i = $scope.wordData.position; i < $scope.tokens.length; i++) {
+                    if(_.includes($scope.tokens[i]._close, "sentence")) {
+                        endIdx = i
+                        break
+                    }
+                }
+
+                modalScope.sentence = _.map($scope.tokens.slice(startIdx, endIdx + 1), "word").join(" ")
+                modalScope.open()
+            }
+        }]
+    }),
+    lsiImage: {
+        template: String.raw`
+            <div>
+                <a target="_blank" ng-href="{{pageUrl}}" ng-show="pageUrl">
+                    <img ng-src="https://spraakbanken.gu.se/korp/data/lsi/faksimil_thumb/thumb.lsi-v{{volumeName}}-{{pageNumber2}}.jpg">
+                </a>
+            </div>
+        `,
+        controller: ["$scope", function($scope) {
+            $scope.pageUrl = $scope.sentenceData["page_page_url"]
+            const re = new RegExp("volume=(.*-.*)&pages=.*#page/(.*)/mode")
+            const matches = $scope.pageUrl.match(re)
+            $scope.volumeName = matches[1]
+            const pageNumber = matches[2]
+            $scope.pageNumber2 = ("00"+pageNumber).slice(-3)
+        }]
+    },
+    expandList: (options = {}) => ({
+        template: `
+        <span ng-if="value == '|'" class="opacity-50">&empty;</span>
+        <ul ng-if="value != '|'">
+            <li ng-repeat="value in values | limitTo:listLimit">
+                <span 
+                    ng-class="{link: internalSearch}"
+                    title="{{ value.prob }}"
+                    ng-bind-html="stringify(value.value) | trust"
+                    ng-click="internalSearch && onItemClick(value.value)"></span>
+                <a
+                    ng-if="attrs.external_search"
+                    ng-href="{{ externalLink(value.value) }}"
+                    class="external_link"
+                    target="_blank"
+                    style="margin-top: -6px"></a>
+            </li>
+        </ul>
+        <span class="link" ng-show="values.length > 1 && !showAll" ng-click="listLimit = listLimit != $scope.values.length ? $scope.values.length : 1">
+            {{listLimit != $scope.values.length ? 'complemgram_show_all': 'complemgram_show_one' | loc:$root.lang}} ({{values.length - 1}})
+        </span>
+        `,
+        controller: ["$scope", function($scope) {
+            let valueArray = _.filter(($scope.value && $scope.value.split("|")) || [], Boolean)
+
+            if ($scope.attrs.ranked) {
+                $scope.values = _.map(valueArray, (value) => {
+                    // TODO is this correct? should we not split at the last occurrence of ":"
+                    const val = value.split(":")
+                    return { value: val[0], prob: val[val.length - 1] }
+                })
+            } else {
+                $scope.values = _.map(valueArray, (value) => ({ value: value }))
+            }
+
+            $scope.listLimit = options.show_all ? $scope.values.length : 1
+
+            $scope.showAll = options.show_all
+            $scope.internalSearch = options.internal_search
+
+            $scope.stringify = getStringifier($scope.key)
+
+            const op = options.op ? options.op : "contains"
+
+            $scope.onItemClick = (value) => {
+                const cqp = `[${$scope.type == 'struct' ? '_.' : ''}${$scope.key} ${op} "${regescape(value)}"]`;
+                statemachine.send("SEARCH_CQP", {cqp})
+            }
+ 
+            if ($scope.attrs.external_search) {
+                $scope.externalLink = (value) => {
+                    return _.template($scope.attrs.external_search)({
+                        val: value,
+                    })
+                }
+            }
+       }]
+    }),
+    copyRowButton: (options = {}) => ({
+        template: `<span class="cursor-pointer" ng-click="click()"><i class="fa-solid fa-copy"></i> {{ 'copy_row' | loc:$root.lang }}</span>`,
+        controller: ["$scope", function($scope) {
+            $scope.click = () => {
+                const copyStr = _.map(options["attributes"] || ["word"], (attribute) =>
+                _.map($scope.tokens, (token) => token[attribute] || $scope.sentenceData[attribute]).join("\t")
+                ).join("\n")
+                navigator.clipboard.writeText(copyStr)
+            }
+       }]
+    }),
+}

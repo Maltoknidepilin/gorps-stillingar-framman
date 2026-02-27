@@ -1,163 +1,191 @@
+import { locAttribute } from "@/i18n"
 import { getStringifier } from "@/services/stringify"
-import statemachine from "@/statemachine"
-import { regescape } from "@/util"
-import { Lemgram } from "@/lemgram"
+
+function getTokenSignature(scope) {
+    const sId = scope?.sentenceData?.s_id || scope?.sentenceData?.sentence_id || ""
+    const pos = scope?.wordData?.position ?? ""
+    const word = scope?.wordData?.word ?? ""
+    return `${sId}:${pos}:${word}`
+}
+
+function ensureHiddenStore(scope) {
+    const sig = getTokenSignature(scope)
+    const w = window
+    if (w.__foHiddenMetaSig !== sig) {
+        w.__foHiddenMetaSig = sig
+        w.__foHiddenMeta = {}
+        w.__foHiddenMetaOpen = false
+    }
+    return w.__foHiddenMeta
+}
+
+function renderHiddenSection() {
+    const w = window
+    const container = document.querySelector("#selected_word")
+    if (!container) return
+
+    const existing = container.querySelector("#fo-hidden-meta")
+    const entries = Object.values(w.__foHiddenMeta || {})
+
+    if (!entries.length) {
+        if (existing) existing.remove()
+        return
+    }
+
+    const section = existing || document.createElement("div")
+    section.id = "fo-hidden-meta"
+
+    const open = Boolean(w.__foHiddenMetaOpen)
+    const label = `Fjalið (${entries.length})`
+    const rows = entries
+        .map((e) => `<div><strong>${e.label}</strong>: ${e.value}</div>`)
+        .join("")
+
+    section.innerHTML = `
+        <div class="mt-2">
+            <button type="button" class="btn btn-link text-left w-full" id="fo-hidden-meta-toggle">${label}</button>
+            <div id="fo-hidden-meta-body" class="text-sm" style="display:${open ? "block" : "none"}">
+                ${rows}
+            </div>
+        </div>
+    `
+
+    const button = section.querySelector("#fo-hidden-meta-toggle")
+    const body = section.querySelector("#fo-hidden-meta-body")
+    if (button && body) {
+        button.onclick = () => {
+            w.__foHiddenMetaOpen = !w.__foHiddenMetaOpen
+            body.style.display = w.__foHiddenMetaOpen ? "block" : "none"
+        }
+    }
+
+    if (!existing) container.appendChild(section)
+    else container.appendChild(section) // re-append to keep it at the bottom
+}
+
+function isMeaningfulScalar(value) {
+    if (value == null) return false
+    if (typeof value !== "string") return true
+    const trimmed = value.trim()
+    if (!trimmed) return false
+    if (trimmed === "_") return false
+    return true
+}
+
+function isMeaningfulSet(value) {
+    if (value == null) return false
+    if (typeof value !== "string") return true
+
+    // CWB uses '|' as set separator and may represent empty sets as just '|'
+    const parts = value.split("|").filter(Boolean)
+    return parts.length > 0
+}
 
 export default {
-    complemgram: {
+    /**
+     * Hides the sidebar row entirely if the value is empty/placeholder.
+     * Intended for morph-feature attributes where many tokens have no value.
+     */
+    foHideEmpty: {
         template: String.raw`
-            <span ng-if="value == '|'" class="opacity-50">&empty;</span>
-            <ul ng-show="value != '|'">
-                <li ng-repeat="comp in values | limitTo:listLimit">
-                    <span ng-repeat="value in comp.split('+') track by $index">
-                        <span ng-if="!$first"> + </span>
-                        <a ng-click="onItemClick(value)" ng-bind-html="stringify(value) | trust"></a>
-                    </span>
-                </li>
-                <li class="link" ng-show="values.length > 1" ng-click="listLimit = listLimit < 10 ? 10 : 1">
-                    {{listLimit < 10 ? 'complemgram_show_all': 'complemgram_show_one' | loc:$root.lang}} ({{values.length - 1}})
-                </li>
-            </ul>
+            <span ng-if="!isEmpty">
+                <strong ng-if="attrs.label">{{ attrs.label | locObj:$root.lang }}</strong><span ng-if="attrs.label">: </span>
+
+                <span ng-if="attrs.type == 'set'">
+                    <ul>
+                        <li ng-repeat="item in valueArray">
+                            <span ng-bind-html="renderValue(item) | trust"></span>
+                        </li>
+                    </ul>
+                </span>
+
+                <span ng-if="attrs.type != 'set'" ng-bind-html="renderValue(value) | trust"></span>
+            </span>
         `,
-        controller: ["$location", "$scope", function($location, $scope) {
-            $scope.listLimit = 1
-            $scope.stringify = (lemgram) => Lemgram.parse(lemgram)?.toHtml() || lemgram
-            $scope.values = $scope.value.split("|").filter(Boolean).map((item) => item.replace(/:.*$/, ""))
-            $scope.onItemClick = (value) => {
-                statemachine.send("SEARCH_LEMGRAM", { value })
-                $location.search("prefix", true)
-                $location.search("suffix", true)
-            }
-        }]
-    },
-    ivipVideo: (options) => ({
-        template: String.raw`
-            <span class="link" ng-click="showVideoModal()">{{'ivip_show_video' | loc:$root.lang}}</span>
-            <div id="video-modal" ng-controller="VideoCtrl"></div>
-        `,
-        controller: ["$scope", function($scope) {
-            const startTime = $scope.wordData["sentence_start"];
-            const endTime = $scope.wordData["sentence_end"];
-            const path = $scope.sentenceData["text_mediafilepath"]
-            const file = $scope.sentenceData["text_mediafile"]
-            const ext = $scope.sentenceData["text_mediafileext"]
+        controller: [
+            "$scope",
+            "store",
+            function ($scope, store) {
+                const hideValuesRaw = $scope.attrs?.sidebar_hide_values
+                const hideValues = Array.isArray(hideValuesRaw)
+                    ? hideValuesRaw
+                    : typeof hideValuesRaw === "string"
+                      ? [hideValuesRaw]
+                      : []
 
-            $scope.showVideoModal = function () {
-                const url = options.baseURL + path +  file + "." + ext
+                const isHiddenScalarValue =
+                    $scope.attrs?.type !== "set" &&
+                    typeof $scope.value === "string" &&
+                    hideValues.includes($scope.value)
 
-                const modalScope = angular.element("#video-modal").scope()
-                modalScope.videos = [{"url": url, "type": "video/mp4"}]
-                modalScope.fileName = file + "." + ext
-                modalScope.startTime = startTime / 1000
-                modalScope.endTime = endTime / 1000
+                const isEmptySet = $scope.attrs?.type === "set" && !isMeaningfulSet($scope.value)
+                const isEmptyScalar = $scope.attrs?.type !== "set" && !isMeaningfulScalar($scope.value)
 
-                // find start of sentence
-                let startIdx = 0
-                for(let i = $scope.wordData.position; i >= 0; i--) {
-                    if(_.includes($scope.tokens[i]._open, "sentence")) {
-                        startIdx = i
-                        break
+                $scope.isEmpty = Boolean(isEmptySet || isEmptyScalar || isHiddenScalarValue)
+                $scope.valueArray = (($scope.value || "").split("|") || []).filter(Boolean)
+
+                // Collect only values hidden by sidebar_hide_values (not plain empty placeholders)
+                if (isHiddenScalarValue) {
+                    const hidden = ensureHiddenStore($scope)
+
+                    const labelObj = $scope.attrs?.label
+                    const label =
+                        typeof labelObj === "string"
+                            ? labelObj
+                            : (labelObj && (labelObj[store.lang] || labelObj.eng || labelObj.fao)) || $scope.key
+
+                    // Render value as the user would have seen it
+                    let rendered = $scope.value
+                    if ($scope.attrs?.stringify) rendered = getStringifier($scope.attrs.stringify)(rendered)
+                    if ($scope.attrs?.translation) rendered = locAttribute($scope.attrs, rendered, store.lang)
+
+                    // Avoid showing empty string in hidden list
+                    if (rendered == null || rendered === "") rendered = $scope.value
+
+                    hidden[$scope.key] = { key: $scope.key, label, value: rendered }
+                }
+
+                // (Re)render expandable section at bottom
+                // Use a short timeout so #selected_word has been populated.
+                setTimeout(() => renderHiddenSection(), 0)
+
+                $scope.renderValue = (value, key = $scope.key) => {
+                    let out = value
+                    if ($scope.attrs.stringify) out = getStringifier($scope.attrs.stringify)(out)
+                    if ($scope.attrs.translation) out = locAttribute($scope.attrs, out, store.lang)
+                    if ($scope.attrs.type === "url") {
+                        out = `<a href="${out}" class="exturl sidebar_url" target="_blank">${decodeURI(out)}</a>`
                     }
+                    return out
                 }
-
-                // find end of sentence
-                let endIdx = $scope.tokens.length - 1
-                for(let i = $scope.wordData.position; i < $scope.tokens.length; i++) {
-                    if(_.includes($scope.tokens[i]._close, "sentence")) {
-                        endIdx = i
-                        break
-                    }
-                }
-
-                modalScope.sentence = _.map($scope.tokens.slice(startIdx, endIdx + 1), "word").join(" ")
-                modalScope.open()
-            }
-        }]
-    }),
-    lsiImage: {
-        template: String.raw`
-            <div>
-                <a target="_blank" ng-href="{{pageUrl}}" ng-show="pageUrl">
-                    <img ng-src="https://spraakbanken.gu.se/korp/data/lsi/faksimil_thumb/thumb.lsi-v{{volumeName}}-{{pageNumber2}}.jpg">
-                </a>
-            </div>
-        `,
-        controller: ["$scope", function($scope) {
-            $scope.pageUrl = $scope.sentenceData["page_page_url"]
-            const re = new RegExp("volume=(.*-.*)&pages=.*#page/(.*)/mode")
-            const matches = $scope.pageUrl.match(re)
-            $scope.volumeName = matches[1]
-            const pageNumber = matches[2]
-            $scope.pageNumber2 = ("00"+pageNumber).slice(-3)
-        }]
+            },
+        ],
     },
-    expandList: (options = {}) => ({
-        template: `
-        <span ng-if="value == '|'" class="opacity-50">&empty;</span>
-        <ul ng-if="value != '|'">
-            <li ng-repeat="value in values | limitTo:listLimit">
-                <span 
-                    ng-class="{link: internalSearch}"
-                    title="{{ value.prob }}"
-                    ng-bind-html="stringify(value.value) | trust"
-                    ng-click="internalSearch && onItemClick(value.value)"></span>
-                <a
-                    ng-if="attrs.external_search"
-                    ng-href="{{ externalLink(value.value) }}"
-                    class="external_link"
-                    target="_blank"
-                    style="margin-top: -6px"></a>
-            </li>
-        </ul>
-        <span class="link" ng-show="values.length > 1 && !showAll" ng-click="listLimit = listLimit != $scope.values.length ? $scope.values.length : 1">
-            {{listLimit != $scope.values.length ? 'complemgram_show_all': 'complemgram_show_one' | loc:$root.lang}} ({{values.length - 1}})
-        </span>
-        `,
-        controller: ["$scope", function($scope) {
-            let valueArray = _.filter(($scope.value && $scope.value.split("|")) || [], Boolean)
-
-            if ($scope.attrs.ranked) {
-                $scope.values = _.map(valueArray, (value) => {
-                    // TODO is this correct? should we not split at the last occurrence of ":"
-                    const val = value.split(":")
-                    return { value: val[0], prob: val[val.length - 1] }
-                })
-            } else {
-                $scope.values = _.map(valueArray, (value) => ({ value: value }))
-            }
-
-            $scope.listLimit = options.show_all ? $scope.values.length : 1
-
-            $scope.showAll = options.show_all
-            $scope.internalSearch = options.internal_search
-
-            $scope.stringify = getStringifier($scope.key)
-
-            const op = options.op ? options.op : "contains"
-
-            $scope.onItemClick = (value) => {
-                const cqp = `[${$scope.type == 'struct' ? '_.' : ''}${$scope.key} ${op} "${regescape(value)}"]`;
-                statemachine.send("SEARCH_CQP", {cqp})
-            }
- 
-            if ($scope.attrs.external_search) {
-                $scope.externalLink = (value) => {
-                    return _.template($scope.attrs.external_search)({
-                        val: value,
-                    })
-                }
-            }
-       }]
-    }),
     copyRowButton: (options = {}) => ({
         template: `<span class="cursor-pointer" ng-click="click()"><i class="fa-solid fa-copy"></i> {{ 'copy_row' | loc:$root.lang }}</span>`,
-        controller: ["$scope", function($scope) {
-            $scope.click = () => {
-                const copyStr = _.map(options["attributes"] || ["word"], (attribute) =>
-                _.map($scope.tokens, (token) => token[attribute] || $scope.sentenceData[attribute]).join("\t")
-                ).join("\n")
-                navigator.clipboard.writeText(copyStr)
-            }
-       }]
+        controller: [
+            "$scope",
+            function ($scope) {
+                $scope.click = async () => {
+                    const attributes = Array.isArray(options.attributes) && options.attributes.length
+                        ? options.attributes
+                        : ["word"]
+
+                    const copyStr = attributes
+                        .map((attribute) =>
+                            ($scope.tokens || [])
+                                .map((token) => token?.[attribute] ?? $scope.sentenceData?.[attribute] ?? "")
+                                .join("\t")
+                        )
+                        .join("\n")
+
+                    try {
+                        await navigator.clipboard.writeText(copyStr)
+                    } catch (_err) {
+                        // keep silent to avoid breaking sidebar interactions on clipboard permission errors
+                    }
+                }
+            },
+        ],
     }),
 }
