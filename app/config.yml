@@ -193,7 +193,8 @@ default_options:
   matches: '*='
   matches_not: '!*='
 
-korp_backend_url: 'https://miklamal.setur.fo/backend'
+# Fallback only; overridden by KORP_BACKEND_URL (see gorpur-framman/app/scripts/data_init.ts)
+korp_backend_url: 'http://localhost:1236'
 
 map_center:
   lat: 62.99515845212052
