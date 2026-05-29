@@ -18,7 +18,7 @@ description:
   fao: |
     <p>
       <strong>Korp</strong> er orðrannsóknarpallur Máltøknidepilsins.
-      Her kanst tú leita í nógvum teksti, <em>málheildum</em>, sum er markaður málfrøðiliga og meira.
+      Her kanst tú leita í nógvum teksti, <em>málgrunnum</em>, sum er markaður málfrøðiliga og meira.
       Síggj <a href="https://spraakbanken.gu.se/verktyg/korp/anvandarhandledning" target="_blank">nýtsluleiðbeiningina</a> fyri at fáa hjálp.
       Nýtir tú Korp í tínum verki, biðja vit teg um at <a href="https://spraakbanken.gu.se/om/referera" target="_blank">vísa til okkara</a>.
       Hevur tú spurningar ella viðmerkingar, kanst tú senda okkum eini boð á <a href="mailto:mtd@mtd.fo" class="whitespace-nowrap">mtd@mtd.fo</a>.
@@ -42,10 +42,12 @@ hits_per_page_values:
 corpus_info_link:
   url_template:
     swe: https://spraakbanken.gu.se/resurser/%s
-    eng: https://spraakbanken.gu.se/en/resources/%s
+    eng: https://mtd.setur.fo/en/mmg/%s
+    fao: https://mtd.setur.fo/mmg/%s
   label:
     swe: Mer information
     eng: More information
+    fao: Fleiri upplýsingar
 
 enable_backend_kwic_download: false
 enable_frontend_kwic_download: true
@@ -54,8 +56,6 @@ default_language: fao
 languages:
   - value: eng
     label: English
-  - value: swe
-    label: Svenska
   - value: fao
     label: Føroyskt
 
@@ -63,8 +63,8 @@ languages:
 #    <img ng-if="$root.lang != 'swe'" src="img/korp_slogan_en.svg" height="300" width="300" />
 logo:
   korp: |
-    <img ng-if="$root.lang == 'fao'" src="img/MIKLAMÁLGRUNNURIN800x90.svg" height="300" width="300" />
-    <img ng-if="$root.lang != 'fao'" src="img/korp_slogan.svg" height="300" width="300" />
+    <img ng-if="$root.lang == 'fao'" src="img/Miklamálgrunnurin.svg" width="400" />
+    <img ng-if="$root.lang != 'fao'" src="img/Miklamálgrunnurin.svg" width="400" />
   organization: |
     <a
         class="hidden min-[1150px]:flex h-20 shrink flex-col justify-end"
@@ -76,7 +76,7 @@ logo:
     </a>
 
     <a class="hidden xl:block shrink-0" href="https://setur.fo/" target="_blank">
-        <img src="img/setur.svg" class="h-full" height="71" width="71"/>
+        <img src="img/setur.svg" class="h-full" height="65" width="65"/>
     </a>
 
 frontpage:
