@@ -19,6 +19,13 @@ function ensureHiddenStore(scope) {
     return w.__foHiddenMeta
 }
 
+function resetHiddenStore() {
+    const w = window
+    w.__foHiddenMetaSig = null
+    w.__foHiddenMeta = {}
+    w.__foHiddenMetaOpen = false
+}
+
 function renderHiddenSection() {
     const w = window
     const container = document.querySelector("#selected_word")
@@ -36,7 +43,7 @@ function renderHiddenSection() {
     section.id = "fo-hidden-meta"
 
     const open = Boolean(w.__foHiddenMetaOpen)
-    const label = `Fjalið (${entries.length})`
+    const label = `Fjalt (${entries.length})`
     const rows = entries
         .map((e) => `<div><strong>${e.label}</strong>: ${e.value}</div>`)
         .join("")
@@ -106,6 +113,10 @@ export default {
             "$scope",
             "store",
             function ($scope, store) {
+                // Always sync/reset the hidden store for the currently selected token
+                // before deciding whether this specific attribute should contribute to it.
+                ensureHiddenStore($scope)
+
                 const hideValuesRaw = $scope.attrs?.sidebar_hide_values
                 const hideValues = Array.isArray(hideValuesRaw)
                     ? hideValuesRaw
@@ -188,4 +199,13 @@ export default {
             },
         ],
     }),
+    resetHiddenStore: {
+        template: "",
+        controller: [
+            function () {
+                resetHiddenStore()
+                setTimeout(() => renderHiddenSection(), 0)
+            },
+        ],
+    },
 }
