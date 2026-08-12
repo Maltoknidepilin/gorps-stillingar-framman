@@ -1,27 +1,18 @@
 description:
   eng: |
     <p>
-      <strong>Korp</strong> is Språkbanken's word research platform.
-      Search large amounts of texts, <em>corpora</em>, annotated for linguistic features and other attributes.
-      Please refer to the <a href="https://spraakbanken.gu.se/en/tools/korp/user-manual" target="_blank">User manual</a> for help.
-      If you are using Korp in your work, please <a href="https://spraakbanken.gu.se/en/about/howtocite" target="_blank">cite us</a>.
-      For questions or comments, contact us at <a href="mailto:sb-info@svenska.gu.se" class="whitespace-nowrap">sb-info@svenska.gu.se</a>.
-    </p>
-  swe: |
-    <p>
-      <strong>Korp</strong> är Språkbankens ordforskningsplattform.
-      Här kan du söka i stora mängder text, <em>korpusar</em>, som är annoterade med språkliga attribut med mera.
-      Se <a href="https://spraakbanken.gu.se/verktyg/korp/anvandarhandledning" target="_blank">användarhandledningen</a> för hjälp.
-      Om du använder Korp i ditt arbete ber vi dig <a href="https://spraakbanken.gu.se/om/referera" target="_blank">referera till oss</a>.
-      För frågor och kommentarer, kontakta <a href="mailto:sb-info@svenska.gu.se" class="whitespace-nowrap">sb-info@svenska.gu.se</a>.
+      The <strong>Faroese Megaword Corpus (Miklamálgrunnurin)</strong> search interface allows users to search a large, diverse and linguistically annotated corpus of Faroese texts.
+      The Faroese Megaword Corpus contains various types of texts from a wide range of sources and time periods.
+      Further information about the corpus is available by selecting <strong>MENU</strong> → <strong>About Miklamálgrunnurin</strong>.
+      Users can search for words, lemmas and grammatical features, such as gender and case, as well as metadata such as year of publication, text type and author.
+      Further information is available in the user guide.
     </p>
   fao: |
     <p>
-      <strong>Korp</strong> er orðrannsóknarpallur Máltøknidepilsins.
-      Her kanst tú leita í nógvum teksti, <em>málgrunnum</em>, sum er markaður málfrøðiliga og meira.
-      Síggj <a href="https://spraakbanken.gu.se/verktyg/korp/anvandarhandledning" target="_blank">nýtsluleiðbeiningina</a> fyri at fáa hjálp.
-      Nýtir tú Korp í tínum verki, biðja vit teg um at <a href="https://spraakbanken.gu.se/om/referera" target="_blank">vísa til okkara</a>.
-      Hevur tú spurningar ella viðmerkingar, kanst tú senda okkum eini boð á <a href="mailto:mtd@mtd.fo" class="whitespace-nowrap">mtd@mtd.fo</a>.
+      Á leitisíðuni hjá <strong>Miklamálgrunninum</strong> ber til at leita í einum stórum, fjølbroyttum og málsliga markaðum føroyskum tekstasavni.
+      Miklamálgrunnurin fevnir um ymisk tekstasløg úr nógvum ymiskum keldum og tíðarskeiðum. Nærri upplýsingar um tekstagrunnin fáast við at trýsta á <strong>VALMYND</strong> → <strong>Um Miklamálgrunnin</strong>.
+      Tað ber til at leita eftir orðum, leitorðum og málfrøðiligum eginleikum, eitt nú kyni og falli, umframt tekstupplýsingum sum útgávuári, tekstaslagi og høvundi.
+      Fleiri upplýsingar eru at finna í leiðbeiningini.
     </p>
 
 auth_module:
@@ -41,11 +32,9 @@ hits_per_page_values:
 
 corpus_info_link:
   url_template:
-    swe: https://spraakbanken.gu.se/resurser/%s
     eng: https://mtd.setur.fo/en/mmg/%s
     fao: https://mtd.setur.fo/mmg/%s
   label:
-    swe: Mer information
     eng: More information
     fao: Fleiri upplýsingar
 
@@ -63,16 +52,16 @@ languages:
 #    <img ng-if="$root.lang != 'swe'" src="img/korp_slogan_en.svg" height="300" width="300" />
 logo:
   korp: |
-    <img ng-if="$root.lang == 'fao'" src="img/Miklamálgrunnurin.svg" width="400" />
-    <img ng-if="$root.lang != 'fao'" src="img/Miklamálgrunnurin.svg" width="400" />
+    <img ng-if="$root.lang == 'fao'" src="img/Miklamálgrunnurin.svg" height="65" style="height:65px; width:auto;" />
+    <img ng-if="$root.lang != 'fao'" src="img/Miklamálgrunnurin.svg" height="65" style="height:65px; width:auto;" />
   organization: |
     <a
         class="hidden min-[1150px]:flex h-20 shrink flex-col justify-end"
         href="https://mtd.setur.fo/"
         target="_blank"
     >
-        <img ng-if="$root.lang == 'fao'" src="img/mtd.png" />
-        <img ng-if="$root.lang != 'fao'" src="img/mtd_en.png" />
+        <img ng-if="$root.lang == 'fao'" src="img/Maltoknidepilin.svg" height="65" style="height:65px; width:auto;" />
+        <img ng-if="$root.lang != 'fao'" src="img/Maltoknidepilin_en.svg" height="65" style="height:65px; width:auto;" />
     </a>
 
     <a class="hidden xl:block shrink-0" href="https://setur.fo/" target="_blank">
@@ -95,7 +84,7 @@ group_statistics:
   - e_cat
 
 statistics_search_default: false
-has_timespan: false
+has_timespan: true
 
 # for 'compile statistics by' selector, can be 'union' or 'intersection'
 reduce_word_attribute_selector: intersection
