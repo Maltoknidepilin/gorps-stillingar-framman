@@ -100,6 +100,8 @@ matomo:
 
 # news_url: https://raw.githubusercontent.com/spraakbanken/newsdesk/main/data/korp.yaml    
 
+word_picture: false
+
 word_picture_tagset:
     # supported pos-tags
     verb: vb
