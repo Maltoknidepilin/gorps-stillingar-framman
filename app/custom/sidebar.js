@@ -1,6 +1,9 @@
 import { locAttribute } from "@/i18n"
 import { getStringifier } from "@/services/stringify"
 
+// Keep collecting hidden morphology values, but do not expose the expandable UI by default.
+const SHOW_HIDDEN_MORPHOLOGY = false
+
 function getTokenSignature(scope) {
     const sId = scope?.sentenceData?.s_id || scope?.sentenceData?.sentence_id || ""
     const pos = scope?.wordData?.position ?? ""
@@ -32,6 +35,11 @@ function renderHiddenSection() {
     if (!container) return
 
     const existing = container.querySelector("#fo-hidden-meta")
+    if (!SHOW_HIDDEN_MORPHOLOGY) {
+        if (existing) existing.remove()
+        return
+    }
+
     const entries = Object.values(w.__foHiddenMeta || {})
 
     if (!entries.length) {
@@ -87,8 +95,59 @@ function isMeaningfulSet(value) {
     const parts = value.split("|").filter(Boolean)
     return parts.length > 0
 }
+function getContextualDisplayValue(scope) {
+    const maps = scope.attrs?.sidebar_value_map
+    for (const [attribute, mapping] of Object.entries(maps || {})) {
+        const contextualValue = scope.wordData?.[attribute]
+        if (
+            mapping &&
+            contextualValue != null &&
+            Object.prototype.hasOwnProperty.call(mapping, contextualValue)
+        ) {
+            return mapping[contextualValue]
+        }
+    }
+    return scope.value
+}
+
+function shouldHideByContext(scope) {
+    const rules = scope.attrs?.sidebar_hide_when
+    return Object.entries(rules || {}).some(([attribute, rawValues]) => {
+        const values = Array.isArray(rawValues) ? rawValues : [rawValues]
+        return values.includes(scope.wordData?.[attribute])
+    })
+}
 
 export default {
+    /**
+     * Presents the user-facing POS derived from base POS, subtype and raw-tag exceptions.
+     */
+    foPartOfSpeech: {
+        template: String.raw`<span ng-bind-html="displayValue | trust"></span>`,
+        controller: [
+            "$scope",
+            "store",
+            function ($scope, store) {
+                let displayKey = $scope.value
+
+                if ($scope.wordData?.mark === "Adegnc") {
+                    displayKey = "Adegnc"
+                } else if ($scope.wordData?.mark === "CR") {
+                    displayKey = "P"
+                } else if ($scope.value === "D") {
+                    displayKey =
+                        {
+                            N: "D_N",
+                            G: "D_G",
+                            I: "D_I",
+                        }[$scope.wordData?.flokkurhjaords] || "D"
+                }
+
+                $scope.displayValue = locAttribute($scope.attrs, displayKey, store.lang)
+            },
+        ],
+    },
+
     /**
      * Hides the sidebar row entirely if the value is empty/placeholder.
      * Intended for morph-feature attributes where many tokens have no value.
@@ -106,7 +165,7 @@ export default {
                     </ul>
                 </span>
 
-                <span ng-if="attrs.type != 'set'" ng-bind-html="renderValue(value) | trust"></span>
+                <span ng-if="attrs.type != 'set'" ng-bind-html="renderValue(displayValue) | trust"></span>
             </span>
         `,
         controller: [
@@ -117,6 +176,9 @@ export default {
                 // before deciding whether this specific attribute should contribute to it.
                 ensureHiddenStore($scope)
 
+                const displayValue = getContextualDisplayValue($scope)
+                $scope.displayValue = displayValue
+
                 const hideValuesRaw = $scope.attrs?.sidebar_hide_values
                 const hideValues = Array.isArray(hideValuesRaw)
                     ? hideValuesRaw
@@ -126,14 +188,20 @@ export default {
 
                 const isHiddenScalarValue =
                     $scope.attrs?.type !== "set" &&
-                    typeof $scope.value === "string" &&
-                    hideValues.includes($scope.value)
+                    typeof displayValue === "string" &&
+                    hideValues.includes(displayValue)
 
-                const isEmptySet = $scope.attrs?.type === "set" && !isMeaningfulSet($scope.value)
-                const isEmptyScalar = $scope.attrs?.type !== "set" && !isMeaningfulScalar($scope.value)
+                const isEmptySet = $scope.attrs?.type === "set" && !isMeaningfulSet(displayValue)
+                const isEmptyScalar = $scope.attrs?.type !== "set" && !isMeaningfulScalar(displayValue)
+                const isHiddenContext = shouldHideByContext($scope)
 
-                $scope.isEmpty = Boolean(isEmptySet || isEmptyScalar || isHiddenScalarValue)
-                $scope.valueArray = (($scope.value || "").split("|") || []).filter(Boolean)
+                $scope.isEmpty = Boolean(
+                    isEmptySet ||
+                        isEmptyScalar ||
+                        isHiddenScalarValue ||
+                        isHiddenContext
+                )
+                $scope.valueArray = ((displayValue || "").split("|") || []).filter(Boolean)
 
                 // Collect only values hidden by sidebar_hide_values (not plain empty placeholders)
                 if (isHiddenScalarValue) {
@@ -146,12 +214,12 @@ export default {
                             : (labelObj && (labelObj[store.lang] || labelObj.eng || labelObj.fao)) || $scope.key
 
                     // Render value as the user would have seen it
-                    let rendered = $scope.value
+                    let rendered = displayValue
                     if ($scope.attrs?.stringify) rendered = getStringifier($scope.attrs.stringify)(rendered)
                     if ($scope.attrs?.translation) rendered = locAttribute($scope.attrs, rendered, store.lang)
 
                     // Avoid showing empty string in hidden list
-                    if (rendered == null || rendered === "") rendered = $scope.value
+                    if (rendered == null || rendered === "") rendered = displayValue
 
                     hidden[$scope.key] = { key: $scope.key, label, value: rendered }
                 }
