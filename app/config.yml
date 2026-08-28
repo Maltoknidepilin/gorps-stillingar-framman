@@ -30,14 +30,6 @@ hits_per_page_values:
   - 500
   - 1000
 
-corpus_info_link:
-  url_template:
-    eng: https://mtd.setur.fo/en/mmg/%s
-    fao: https://mtd.setur.fo/mmg/%s
-  label:
-    eng: More information
-    fao: Fleiri upplýsingar
-
 enable_backend_kwic_download: false
 enable_frontend_kwic_download: true
 
