@@ -87,13 +87,15 @@ function isMeaningfulScalar(value) {
     return true
 }
 
-function isMeaningfulSet(value) {
-    if (value == null) return false
-    if (typeof value !== "string") return true
+function getVisibleSetValues(value, hideValues = []) {
+    if (value == null) return []
+    if (typeof value !== "string") return [value]
 
     // CWB uses '|' as set separator and may represent empty sets as just '|'
-    const parts = value.split("|").filter(Boolean)
-    return parts.length > 0
+    return value
+        .split("|")
+        .map((part) => part.trim())
+        .filter((part) => part && !hideValues.includes(part))
 }
 function getContextualDisplayValue(scope) {
     const maps = scope.attrs?.sidebar_value_map
@@ -191,7 +193,8 @@ export default {
                     typeof displayValue === "string" &&
                     hideValues.includes(displayValue)
 
-                const isEmptySet = $scope.attrs?.type === "set" && !isMeaningfulSet(displayValue)
+                const visibleSetValues = getVisibleSetValues(displayValue, hideValues)
+                const isEmptySet = $scope.attrs?.type === "set" && visibleSetValues.length === 0
                 const isEmptyScalar = $scope.attrs?.type !== "set" && !isMeaningfulScalar(displayValue)
                 const isHiddenContext = shouldHideByContext($scope)
 
@@ -201,7 +204,7 @@ export default {
                         isHiddenScalarValue ||
                         isHiddenContext
                 )
-                $scope.valueArray = ((displayValue || "").split("|") || []).filter(Boolean)
+                $scope.valueArray = visibleSetValues
 
                 // Collect only values hidden by sidebar_hide_values (not plain empty placeholders)
                 if (isHiddenScalarValue) {
