@@ -186,8 +186,9 @@ map_center:
 
 common_struct_types:
   date_interval:
-    label: 
-      eng: time interval
+    label:
+      fao: Tíðarskeið
+      eng: Time interval
       swe: tidsintervall
     hide_sidebar: 'true'
     hide_compare: 'true'
