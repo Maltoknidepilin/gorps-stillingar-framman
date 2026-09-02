@@ -82,6 +82,10 @@ has_timespan: true
 reduce_word_attribute_selector: intersection
 reduce_struct_attribute_selector: intersection
 
+word_label:
+  fao: orð
+  eng: word
+
 matomo:
   url: https://spraakbanken.gu.se/stats/
   # Enable real reporting only on live sites
