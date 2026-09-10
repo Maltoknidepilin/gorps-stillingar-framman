@@ -121,6 +121,37 @@ function shouldHideByContext(scope) {
 }
 
 export default {
+    foAudio: {
+        template: `<div ng-if="safeUrl">
+            <audio controls preload="none" ng-src="{{safeUrl}}"
+                aria-label="{{attrs.label[$root.lang] || attrs.label.fao}}" style="max-width:100%"></audio>
+            <a ng-href="{{linkUrl}}" target="_blank" rel="noopener noreferrer">{{attrs.label[$root.lang] || attrs.label.fao}}</a>
+        </div>`,
+        controller: ["$scope", "$sce", function ($scope, $sce) {
+            try {
+                const url = new URL($scope.value)
+                if (["http:", "https:"].includes(url.protocol) && !url.username && !url.password) {
+                    $scope.linkUrl = url.href
+                    $scope.safeUrl = $sce.trustAsResourceUrl(url.href)
+                }
+            } catch (_) {
+                // Missing/invalid audio references produce no player or link.
+            }
+        }],
+    },
+    foReadMore: {
+        template: '<a ng-if="safeUrl" ng-href="{{safeUrl}}" target="_blank" rel="noopener noreferrer">{{attrs.label[$root.lang] || attrs.label.fao}}</a>',
+        controller: ["$scope", function ($scope) {
+            try {
+                const url = new URL($scope.value)
+                if (["http:", "https:"].includes(url.protocol)) {
+                    $scope.safeUrl = url.href
+                }
+            } catch (_) {
+                // An absent or malformed source URL has no external link.
+            }
+        }],
+    },
     /**
      * Presents the user-facing POS derived from base POS, subtype and raw-tag exceptions.
      */
