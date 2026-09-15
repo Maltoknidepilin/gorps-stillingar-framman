@@ -124,7 +124,7 @@ function shouldHideByContext(scope) {
 export default {
     foAudio,
     foReadMore: {
-        template: '<a ng-if="safeUrl" ng-href="{{safeUrl}}" target="_blank" rel="noopener noreferrer">{{attrs.label[$root.lang] || attrs.label.fao}}</a>',
+        template: '<a ng-if="safeUrl" ng-href="{{safeUrl}}" target="_blank" rel="noopener noreferrer">{{(attrs.sidebar_link_text || attrs.label) | locObj:$root.lang}}</a>',
         controller: ["$scope", function ($scope) {
             try {
                 const url = new URL($scope.value)

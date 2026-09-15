@@ -14,10 +14,6 @@ export default (options = {}) => ({
                 <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
                 {{'play_sentence' | loc:$root.lang}}
             </button>
-            <button type="button" class="btn btn-default btn-sm" ng-click="playNormal()"
-                ng-disabled="!sentenceStarted">
-                {{'play_audio_normally' | loc:$root.lang}}
-            </button>
         </div>
         <audio controls preload="none"
             aria-label="{{attrs.label[$root.lang] || attrs.label.fao}}"></audio>
@@ -29,7 +25,6 @@ export default (options = {}) => ({
     </div>`,
     controller: ["$scope", "$element", function ($scope, $element) {
         let playback, audio, destroyed = false, request = 0
-        $scope.sentenceStarted = false
         try {
             const url = new URL($scope.value)
             if (["http:", "https:"].includes(url.protocol) && !url.username && !url.password)
@@ -71,14 +66,7 @@ export default (options = {}) => ({
             const ok = await playing
             if (!destroyed && current === request) $scope.$evalAsync(() => {
                 $scope.playbackFailed = !ok
-                $scope.sentenceStarted = ok
             })
-        }
-        $scope.playNormal = async () => {
-            if (!playback || !$scope.sentenceStarted) return
-            const current = ++request
-            const ok = await playback.playNormal()
-            if (!destroyed && current === request) $scope.$evalAsync(() => { $scope.playbackFailed = !ok })
         }
         $scope.$on("$destroy", () => { destroyed = true; playback?.destroy() })
     }],
