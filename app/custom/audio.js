@@ -1,24 +1,35 @@
 import settings from "@/settings"
-import { AudioPlayback, audioNumber, audioRange } from "@/kwic/audio-playback"
+import { AudioPlayback, audioNumber, audioRange, formatAudioTime } from "@/kwic/audio-playback"
 
 /** Adapter for the existing sidebar audio feature. Attribute names belong in presets. */
 export default (options = {}) => ({
-    template: `<div ng-if="audioUrl">
-        <button ng-if="sentenceRange" type="button" class="btn btn-default btn-sm mb-2"
-            ng-click="playSentence()" ng-class="{'active': sentencePlaying}">
-            <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
-            {{'play_sentence' | loc:$root.lang}}
-        </button>
-        <button ng-if="sentenceRange" type="button" class="btn btn-link btn-sm mb-2" ng-click="playNormal()">
-            {{'play_audio_normally' | loc:$root.lang}}
-        </button>
+    block: true,
+    template: `<div ng-if="audioUrl" class="fo-audio">
+        <div ng-if="sentenceRange" class="fo-audio__time">
+            <strong>{{'audio_recording_range' | loc:$root.lang}}:</strong> {{sentenceTime}}
+        </div>
+        <div ng-if="sentenceRange" class="fo-audio__actions">
+            <button type="button" class="btn btn-default btn-sm"
+                ng-click="playSentence()" ng-class="{'active': sentencePlaying}">
+                <i class="fa-solid fa-volume-high" aria-hidden="true"></i>
+                {{'play_sentence' | loc:$root.lang}}
+            </button>
+            <button type="button" class="btn btn-default btn-sm" ng-click="playNormal()"
+                ng-disabled="!sentenceStarted">
+                {{'play_audio_normally' | loc:$root.lang}}
+            </button>
+        </div>
         <audio controls preload="none"
-            aria-label="{{attrs.label[$root.lang] || attrs.label.fao}}" style="max-width:100%"></audio>
-        <a ng-href="{{audioUrl}}" target="_blank" rel="noopener noreferrer">{{attrs.label[$root.lang] || attrs.label.fao}}</a>
+            aria-label="{{attrs.label[$root.lang] || attrs.label.fao}}"></audio>
+        <a ng-href="{{audioUrl}}" download target="_blank" rel="noopener noreferrer">
+            <i class="fa-solid fa-download" aria-hidden="true"></i>
+            {{'download_audio_file' | loc:$root.lang}}
+        </a>
         <span ng-if="playbackFailed" role="status">{{'audio_playback_failed' | loc:$root.lang}}</span>
     </div>`,
     controller: ["$scope", "$element", function ($scope, $element) {
         let playback, audio, destroyed = false, request = 0
+        $scope.sentenceStarted = false
         try {
             const url = new URL($scope.value)
             if (["http:", "https:"].includes(url.protocol) && !url.username && !url.password)
@@ -30,8 +41,10 @@ export default (options = {}) => ({
         // FPSC uses speech WAVs. Only an explicitly configured meeting player
         // may add the speech offset. Never infer the time base from URL shape.
         const offset = options.time_base === "meeting" ? audioNumber(attrs[options.speech_start]) : 0
-        if (relative && offset != undefined && offset >= 0)
+        if (relative && offset != undefined && offset >= 0) {
             $scope.sentenceRange = { start: relative.start + offset, end: relative.end + offset }
+            $scope.sentenceTime = `${formatAudioTime($scope.sentenceRange.start)}–${formatAudioTime($scope.sentenceRange.end)}`
+        }
 
         const update = () => {
             if (!destroyed) $scope.$evalAsync(() => {
@@ -56,10 +69,13 @@ export default (options = {}) => ({
                 aligned: relative, effective: playback.range,
             })
             const ok = await playing
-            if (!destroyed && current === request) $scope.$evalAsync(() => { $scope.playbackFailed = !ok })
+            if (!destroyed && current === request) $scope.$evalAsync(() => {
+                $scope.playbackFailed = !ok
+                $scope.sentenceStarted = ok
+            })
         }
         $scope.playNormal = async () => {
-            if (!playback) return
+            if (!playback || !$scope.sentenceStarted) return
             const current = ++request
             const ok = await playback.playNormal()
             if (!destroyed && current === request) $scope.$evalAsync(() => { $scope.playbackFailed = !ok })
