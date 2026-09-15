@@ -22,6 +22,10 @@ auth_module:
 
 # autocomplete: true
 map_enabled: false
+# Padding is applied by the player; stored forced-alignment times stay exact.
+audio_playback:
+  pre_roll: 0.25
+  post_roll: 0.40
 hits_per_page_values:
   - 25
   - 50

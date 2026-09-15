@@ -1,5 +1,6 @@
 import { locAttribute } from "@/i18n"
 import { getStringifier } from "@/services/stringify"
+import foAudio from "./audio"
 
 // Keep collecting hidden morphology values, but do not expose the expandable UI by default.
 const SHOW_HIDDEN_MORPHOLOGY = false
@@ -121,24 +122,7 @@ function shouldHideByContext(scope) {
 }
 
 export default {
-    foAudio: {
-        template: `<div ng-if="safeUrl">
-            <audio controls preload="none" ng-src="{{safeUrl}}"
-                aria-label="{{attrs.label[$root.lang] || attrs.label.fao}}" style="max-width:100%"></audio>
-            <a ng-href="{{linkUrl}}" target="_blank" rel="noopener noreferrer">{{attrs.label[$root.lang] || attrs.label.fao}}</a>
-        </div>`,
-        controller: ["$scope", "$sce", function ($scope, $sce) {
-            try {
-                const url = new URL($scope.value)
-                if (["http:", "https:"].includes(url.protocol) && !url.username && !url.password) {
-                    $scope.linkUrl = url.href
-                    $scope.safeUrl = $sce.trustAsResourceUrl(url.href)
-                }
-            } catch (_) {
-                // Missing/invalid audio references produce no player or link.
-            }
-        }],
-    },
+    foAudio,
     foReadMore: {
         template: '<a ng-if="safeUrl" ng-href="{{safeUrl}}" target="_blank" rel="noopener noreferrer">{{attrs.label[$root.lang] || attrs.label.fao}}</a>',
         controller: ["$scope", function ($scope) {
