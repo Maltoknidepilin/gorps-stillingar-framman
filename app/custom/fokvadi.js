@@ -2,26 +2,12 @@
 // Original manuscript/edition metadata stays untouched in CWB and the archive.
 const clean = (value) => String(value ?? "").replace(/\s+/g, " ").trim()
 const comparable = (value) => clean(value).toLowerCase().replace(/[ .;,:]+$/, "")
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-const contains = (text, part) =>
-    new RegExp(`(?<![\\p{L}\\p{N}_])${escapeRegex(part)}(?![\\p{L}\\p{N}_])`, "u").test(text)
-
-export function balladSource(manuscript, note) {
-    const parts = []
-    for (const part of [clean(manuscript), clean(note)]) {
-        const key = comparable(part)
-        if (!key || parts.some((previous) => contains(comparable(previous), key))) continue
-        const shorter = parts.findIndex((previous) => contains(key, comparable(previous)))
-        if (shorter >= 0) parts[shorter] = part
-        else parts.push(part)
-    }
-    return parts.join("; ")
-}
+const readableVolume = (value) => clean(value).replace(/^Bind\s+([IVXLCDM]+)\.docx?$/i, "Føroya kvæði, bind $1")
 
 export function balladEdition(edition, sourceFile) {
-    const references = clean(edition).split("|").map((part) => part.trim().replace(/^\d+\.\s*/, ""))
+    const references = clean(edition).split("|").map((part) => readableVolume(part.trim().replace(/^\d+\.\s*/, "")))
     const ccf = references.filter((part) => /Føroya kvæði|\bFK\b/i.test(part))
-    let display = [...new Set(ccf)].join(" | ") || clean(edition)
+    let display = [...new Set(ccf)].join(" | ") || readableVolume(edition)
     const volume = /^Bind\s+([IVXLCDM]+)\.docx?$/i.exec(clean(sourceFile))?.[1].toUpperCase()
     if (volume && !new RegExp(`\\b(?:vol\\.?|bind|band)\\s+${volume}\\b`, "i").test(display)) {
         display = [display, `Føroya kvæði, bind ${volume}`].filter(Boolean).join("; ")
@@ -46,6 +32,17 @@ function summaryComponent(primary, fallback, summarize) {
     }
 }
 
-export const foBalladSource = summaryComponent("text_heimild", "text_handrit", (note, manuscript) =>
-    balladSource(manuscript, note))
+export const foBalladSource = {
+    template: '<span ng-bind="displayValue"></span>',
+    controller: ["$scope", "$element", function ($scope, $element) {
+        const data = $scope.sentenceData || {}
+        // A source note may name a collector, a manuscript, or both. Do not
+        // classify it as an author or merge it into the separate manuscript row.
+        $scope.displayValue = clean($scope.value ?? data[$scope.key])
+        if (!$scope.displayValue || ($scope.key === "text_heimild" &&
+            comparable($scope.displayValue) === comparable(data.text_handrit))) {
+            $element.hide()
+        }
+    }],
+}
 export const foBalladEdition = summaryComponent("text_utgava", "text_bind", balladEdition)

@@ -2,6 +2,7 @@ import { locAttribute } from "@/i18n"
 import { getStringifier } from "@/services/stringify"
 import foAudio from "./audio"
 import { foBalladSource, foBalladEdition } from "./fokvadi"
+import { foLemma } from "./lemma"
 
 // Keep collecting hidden morphology values, but do not expose the expandable UI by default.
 const SHOW_HIDDEN_MORPHOLOGY = false
@@ -123,6 +124,7 @@ function shouldHideByContext(scope) {
 }
 
 export default {
+    foLemma,
     foAudio,
     foBalladSource,
     foBalladEdition,
