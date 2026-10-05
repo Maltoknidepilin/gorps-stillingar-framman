@@ -156,6 +156,8 @@ export default {
                     displayKey = "Adegnc"
                 } else if ($scope.wordData?.mark === "CR") {
                     displayKey = "P"
+                } else if ($scope.wordData?.mark === "CI") {
+                    displayKey = "C_I"
                 } else if ($scope.value === "D") {
                     displayKey =
                         {
