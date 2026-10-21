@@ -47,12 +47,14 @@ languages:
 #    <img ng-if="$root.lang == 'fao'" src="img/MMG.png" height="300" width="300" />
 #    <img ng-if="$root.lang != 'swe'" src="img/korp_slogan_en.svg" height="300" width="300" />
 logo:
+  loading: |
+    <img class="animate-pulse" src="img/Miklamálgrunnurin.svg" alt="Miklamálgrunnurin" width="600" />
   korp: |
     <img ng-if="$root.lang == 'fao'" src="img/Miklamálgrunnurin.svg" height="65" style="height:65px; width:auto;" />
     <img ng-if="$root.lang != 'fao'" src="img/Miklamálgrunnurin.svg" height="65" style="height:65px; width:auto;" />
   organization: |
     <a
-        class="hidden min-[1150px]:flex h-20 shrink flex-col justify-end"
+        class="header-mtd-logo hidden xl:flex shrink-0 flex-col justify-end"
         href="https://mtd.setur.fo/"
         target="_blank"
     >
@@ -60,7 +62,7 @@ logo:
         <img ng-if="$root.lang != 'fao'" src="img/Maltoknidepilin_en.svg" height="65" style="height:65px; width:auto;" />
     </a>
 
-    <a class="hidden xl:block shrink-0" href="https://setur.fo/" target="_blank">
+    <a class="hidden min-[1536px]:block shrink-0" href="https://setur.fo/" target="_blank">
         <img src="img/setur.svg" class="h-full" height="65" width="65"/>
     </a>
 
@@ -87,7 +89,7 @@ reduce_word_attribute_selector: intersection
 reduce_struct_attribute_selector: intersection
 
 word_label:
-  fao: orð
+  fao: Orðið
   eng: word
 
 matomo:
@@ -169,8 +171,10 @@ word_picture_conf:
       - rel: preposition_rel
         css_class: color_green
 
-default_overview_context: 1 sentence
-default_reading_context: 1 paragraph
+# Use the CWB structures: sentences for KWIC, stanzas for expanded ballad context.
+# Corpora without stanza context fall back to their configured sentence context.
+default_overview_context: 1 s
+default_reading_context: 1 vers
 
 default_within:
   sentence: sentence

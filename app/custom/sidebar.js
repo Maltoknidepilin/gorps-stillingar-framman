@@ -3,6 +3,8 @@ import { getStringifier } from "@/services/stringify"
 import foAudio from "./audio"
 import { foBalladSource, foBalladEdition } from "./fokvadi"
 import { foLemma } from "./lemma"
+import { foDictionaryEntries } from "./fob"
+import { foIslexEntries, foIslexHeadword } from "./islex"
 
 // Keep collecting hidden morphology values, but do not expose the expandable UI by default.
 const SHOW_HIDDEN_MORPHOLOGY = false
@@ -101,6 +103,13 @@ function getVisibleSetValues(value, hideValues = []) {
         .filter((part) => part && !hideValues.includes(part))
 }
 function getContextualDisplayValue(scope) {
+    // Read configured features from the full tag, including corpora indexed
+    // before the participle feature positions were corrected in Sparv.
+    const tag = scope.wordData?.mark
+    const tagIndex = scope.attrs?.sidebar_value_from_tag?.[tag?.[0]]
+    if (typeof tag === "string" && Number.isInteger(tagIndex) && tagIndex >= 0) {
+        return tag[tagIndex] || ""
+    }
     const maps = scope.attrs?.sidebar_value_map
     for (const [attribute, mapping] of Object.entries(maps || {})) {
         const contextualValue = scope.wordData?.[attribute]
@@ -124,6 +133,9 @@ function shouldHideByContext(scope) {
 }
 
 export default {
+    foDictionaryEntries,
+    foIslexEntries,
+    foIslexHeadword,
     foLemma,
     foAudio,
     foBalladSource,

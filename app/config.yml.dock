@@ -175,8 +175,10 @@ word_picture_conf:
       - rel: preposition_rel
         css_class: color_green
 
-default_overview_context: 1 sentence
-default_reading_context: 1 paragraph
+# Use the CWB structures: sentences for KWIC, stanzas for expanded ballad context.
+# Corpora without stanza context fall back to their configured sentence context.
+default_overview_context: 1 s
+default_reading_context: 1 vers
 
 default_within:
   sentence: sentence
