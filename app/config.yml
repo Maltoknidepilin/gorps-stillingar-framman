@@ -92,13 +92,14 @@ word_label:
   fao: Orðið
   eng: word
 
-matomo:
-  url: https://spraakbanken.gu.se/stats/
+# External analytics disabled. 
+# matomo:
+#  url: https://spraakbanken.gu.se/stats/
   # Enable real reporting only on live sites
-  staging:
-    site: 3
-  production:
-    site: 3
+#  staging:
+#    site: 3
+#  production:
+#    site: 3
 
 # news_url: https://raw.githubusercontent.com/spraakbanken/newsdesk/main/data/korp.yaml    
 
